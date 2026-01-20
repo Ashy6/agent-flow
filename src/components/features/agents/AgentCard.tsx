@@ -52,12 +52,19 @@ export function AgentCard({ agent }: AgentCardProps) {
           <span>完成任务: {agent.completedJobs}</span>
         </div>
 
-        {/* Action Button */}
-        <Link href={`/agents/${agent.id}`}>
-          <Button variant="secondary" className="w-full">
-            查看详情
-          </Button>
-        </Link>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Link href={`/agents/${agent.id}`} className="flex-1">
+            <Button variant="secondary" className="w-full">
+              查看详情
+            </Button>
+          </Link>
+          <Link href={`/agents/chat?agentId=${agent.id}`} className="flex-1">
+            <Button variant="default" className="w-full">
+              进入会话
+            </Button>
+          </Link>
+        </div>
       </div>
     </Card>
   );
