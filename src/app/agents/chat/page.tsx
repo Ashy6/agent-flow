@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import AgentChatClient from './AgentChatClient';
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function AgentChatPage() {
-  return <AgentChatClient />;
+  return (
+    <Suspense fallback={null}>
+      <AgentChatClient />
+    </Suspense>
+  );
 }
