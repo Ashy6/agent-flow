@@ -9,3 +9,4 @@ export * from './services/wallet';
 export * from './services/agents';
 export * from './services/jobs';
 export * from './services/bills';
+export * from './services/rag';
