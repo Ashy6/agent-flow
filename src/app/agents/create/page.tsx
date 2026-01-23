@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { useToast } from "@/contexts/ToastContext";
 import { agentService } from "@/lib/api/services/agents";
+import { ragService } from "@/lib/api/services/rag";
 import { useWalletStore } from "@/store/walletStore";
 import {
   AgentChatConfig,
@@ -91,12 +92,34 @@ export default function CreateAgentPage() {
         fullChatConfig,
       );
 
-      await agentService.createAgent({
+      const createdAgent = await agentService.createAgent({
         name: formData.name.trim(),
         url: agentUrl,
         description: encodedDescription || undefined,
         price: formData.price || "0",
       });
+
+      // todo2: 后期走接口实现。将 Agent 信息追加到 RAG 向量库（用于后续智能匹配）
+      try {
+        await ragService.appendDocuments({
+          namespace: "agents",
+          documents: [
+            {
+              id: createdAgent.id,
+              content: `Agent名称: ${createdAgent.name}\n描述: ${baseDescription}\n价格: ${createdAgent.price} APT`,
+              metadata: {
+                agentId: createdAgent.id,
+                name: createdAgent.name,
+                price: createdAgent.price,
+                timestamp: new Date().toISOString(),
+              },
+            },
+          ],
+        });
+      } catch (ragError) {
+        // RAG 追加失败不影响主流程，仅打印警告
+        console.warn("RAG 文档追加失败:", ragError);
+      }
 
       toast.success("Agent 注册成功！");
       router.push("/agents");

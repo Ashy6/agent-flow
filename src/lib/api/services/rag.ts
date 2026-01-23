@@ -74,17 +74,16 @@ export interface RagQueryRequest {
 /** 检索到的文档 */
 export interface RetrievedDocument {
   id: string;
-  content: string;
+  content?: string;
+  text?: string;              // RAG 返回的原始文本（JSON 字符串）
   score: number;              // 相似度分数
+  keywordScore?: number;      // 关键词分数
+  semanticScore?: number;     // 语义分数
   metadata?: DocumentMetadata;
 }
 
-/** 查询响应（文档模式） */
-export interface RagQueryDocumentsResponse {
-  success: boolean;
-  documents: RetrievedDocument[];
-  query: string;
-}
+/** 查询响应（文档模式）- API 直接返回数组 */
+export type RagQueryDocumentsResponse = RetrievedDocument[];
 
 /** 查询响应（答案模式） */
 export interface RagQueryAnswerResponse {
@@ -225,7 +224,7 @@ export async function queryDocuments(
 ): Promise<RagQueryDocumentsResponse> {
   return ragRequest<RagQueryDocumentsResponse>('/rag/query', {
     method: 'POST',
-    body: { ...data, answerMode: 'documents' },
+    body: { ...data, answerMode: 'documents' , temperature: 0.2 },
   });
 }
 
@@ -303,7 +302,7 @@ export async function retrieveFromAgent(
     query,
     topK,
   });
-  return response.documents;
+  return response;
 }
 
 /**
