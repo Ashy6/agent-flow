@@ -14,7 +14,8 @@ if (process.env.NODE_ENV === 'production') {
   nextConfig.rewrites = async () => [
     {
       source: '/api/:path*',
-      destination: 'http://150.158.142.132:3000/:path*',
+      // destination: 'http://150.158.142.132:3000/:path*',
+      destination: 'http://localhost:8000/:path*',
     },
   ]
 }

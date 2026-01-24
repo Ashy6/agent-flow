@@ -7,8 +7,6 @@ import {
   ArrowLeft,
   CheckCircle,
   XCircle,
-  Send,
-  Paperclip,
   Loader2,
 } from "lucide-react";
 import { Chat as AIChat, useChat } from "@ai-sdk/react";
@@ -51,7 +49,7 @@ export default function AgentChatClient() {
   }, [selectedAgentConfig?.chatApiUrl]);
 
   // 使用 useChat hook
-  const { messages, setMessages, sendMessage, status } = useChat({
+  const { messages, setMessages, status } = useChat({
     chat,
   });
 
@@ -118,47 +116,6 @@ export default function AgentChatClient() {
     // 解析聊天配置
     const { config } = decodeAgentDescription(agent.description || "");
     setSelectedAgentConfig(config);
-  };
-
-  // 发送消息
-  const handleSendMessage = async (text: string) => {
-    if (!text.trim() || !selectedAgent || isStreaming) return;
-
-    // 如果有配置，使用 AI SDK 发送消息
-    if (selectedAgentConfig?.chatApiUrl && chat) {
-      try {
-        await sendMessage(
-          { text },
-          {
-            body: {
-              agentId: selectedAgentConfig.agentId,
-              modelId: selectedAgentConfig.modelId,
-              systemPrompt: selectedAgentConfig.systemPrompt,
-              temperature: selectedAgentConfig.temperature,
-            },
-          },
-        );
-      } catch (error) {
-        console.error("发送消息失败:", error);
-        toast.error(error instanceof Error ? error.message : "发送消息失败");
-      }
-    } else {
-      // 没有配置，显示提示信息
-      const { description } = decodeAgentDescription(
-        selectedAgent.description || "",
-      );
-      const notConfiguredMessage: UIMessage = {
-        id: Date.now().toString(),
-        role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: `你好！我是 ${selectedAgent.name}。\n\n${description || "我能帮助你解决各种问题。"}\n\n当前 Agent 未配置聊天 API。如需启用聊天功能，请在创建或编辑 Agent 时配置聊天 API 参数。`,
-          },
-        ],
-      };
-      setMessages([...messages, notConfiguredMessage]);
-    }
   };
 
   // 处理发起 Job
@@ -423,50 +380,6 @@ export default function AgentChatClient() {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* Input Area */}
-                  <div className="px-6 py-4 border-t border-gray-200 bg-white">
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const input = e.currentTarget.querySelector(
-                          "input",
-                        ) as HTMLInputElement;
-                        handleSendMessage(input.value);
-                        input.value = "";
-                      }}
-                      className="space-y-2"
-                    >
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          <Paperclip className="w-5 h-5" />
-                        </button>
-                        <input
-                          type="text"
-                          placeholder={`Send message to ${selectedAgent.name} Agent...`}
-                          className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          disabled={isStreaming}
-                        />
-                        <Button
-                          type="submit"
-                          disabled={isStreaming}
-                          className="px-6"
-                        >
-                          {isStreaming ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <Send className="w-5 h-5" />
-                          )}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-gray-500 text-center">
-                        当前为 V1 会话模式，历史记录暂不存在本地。切换 Agent
-                        可重新提起与该 Agent 可直接进行对话。
-                      </p>
-                    </form>
-                  </div>
                 </>
               ) : (
                 <div className="flex-1 flex items-center justify-center">
