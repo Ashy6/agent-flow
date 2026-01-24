@@ -11,12 +11,19 @@ import { mockAgents } from "../mock";
 // Agent 状态枚举
 export type AgentStatus = "enabled" | "disabled";
 
+// Agent URL 参数（用于配置 AI 模型）
+export interface AgentUrlParams {
+  modelId?: string;      // 模型 ID
+  temperature?: number;  // 温度参数 (0-2)
+}
+
 // Agent 数据传输对象
 export interface AgentDto {
   id: string; // Agent ID
   ownerUserId: string; // 创建者用户 ID
   name: string; // Agent 名称
   url: string; // 执行地址（非 owner 时返回空字符串）
+  urlParams?: AgentUrlParams; // URL 参数（AI 模型配置）
   description: string; // 描述
   price: string; // 单次执行价格（平台币）
   status: AgentStatus; // 状态
@@ -42,7 +49,7 @@ export interface PaginatedResponse<T> {
 export interface CreateAgentRequest {
   name: string; // Agent 名称
   url: string; // 执行地址（URL）
-  urlOption?: any; // 配置选项（任意对象） todo: 接口支持后跳转对象参数
+  urlParams?: AgentUrlParams; // URL 参数（AI 模型配置）
   description?: string; // 描述（可选）
   price: string; // 单次执行价格（字符串）
 }

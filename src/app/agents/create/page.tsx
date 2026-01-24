@@ -14,13 +14,9 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { useToast } from "@/contexts/ToastContext";
-import { agentService } from "@/lib/api/services/agents";
+import { agentService, AgentUrlParams } from "@/lib/api/services/agents";
 import { ragService } from "@/lib/api/services/rag";
 import { useWalletStore } from "@/store/walletStore";
-import {
-  AgentChatConfig,
-  encodeAgentDescription,
-} from "@/lib/utils/agentConfig";
 
 export default function CreateAgentPage() {
   const router = useRouter();
@@ -36,9 +32,8 @@ export default function CreateAgentPage() {
     price: "",
   });
 
-  // 聊天配置 - 简化版
-  const [chatConfig, setChatConfig] = useState<Partial<AgentChatConfig>>({
-    agentId: "",
+  // AI 模型配置
+  const [chatConfig, setChatConfig] = useState<Partial<AgentUrlParams>>({
     modelId: "",
     temperature: 0.7,
   });
@@ -78,24 +73,17 @@ export default function CreateAgentPage() {
 
     setIsSubmitting(true);
     try {
-      const fullChatConfig: AgentChatConfig = {
-        chatApiUrl: agentUrl,
-        agentId: chatConfig.agentId?.trim() || undefined,
+      // 构建 urlParams
+      const urlParams: AgentUrlParams = {
         modelId: chatConfig.modelId?.trim() || undefined,
-        systemPrompt: baseDescription,
         temperature,
       };
-
-      // 将配置编码到 description 中
-      const encodedDescription = encodeAgentDescription(
-        baseDescription,
-        fullChatConfig,
-      );
 
       const createdAgent = await agentService.createAgent({
         name: formData.name.trim(),
         url: agentUrl,
-        description: encodedDescription || undefined,
+        urlParams,
+        description: baseDescription || undefined,
         price: formData.price || "0",
       });
 
@@ -108,7 +96,6 @@ export default function CreateAgentPage() {
               id: createdAgent.id,
               content: `Agent名称: ${createdAgent.name}\n描述: ${baseDescription}\n价格: ${createdAgent.price} APT`,
               metadata: {
-                agentId: createdAgent.id,
                 name: createdAgent.name,
                 price: createdAgent.price,
                 timestamp: new Date().toISOString(),
@@ -131,7 +118,7 @@ export default function CreateAgentPage() {
     }
   };
 
-  const updateChatConfig = (updates: Partial<AgentChatConfig>) => {
+  const updateChatConfig = (updates: Partial<AgentUrlParams>) => {
     setChatConfig((prev) => ({ ...prev, ...updates }));
   };
 

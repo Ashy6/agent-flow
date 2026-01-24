@@ -17,7 +17,6 @@ import { jobService } from "@/lib/api/services/jobs";
 import { agentService, AgentDto } from "@/lib/api/services/agents";
 import { ragService, RetrievedDocument } from "@/lib/api/services/rag";
 import { useWalletStore } from "@/store/walletStore";
-import { decodeAgentDescription } from "@/lib/utils/agentConfig";
 
 function CreateJobForm() {
   const router = useRouter();
@@ -71,21 +70,15 @@ function CreateJobForm() {
         if (enabledAgents.length > 0 && !ragInitializedRef.current) {
           ragInitializedRef.current = true;
           try {
-            const documents = enabledAgents.map((agent) => {
-              // 解码获取原始描述（后期删除）
-              const { baseDescription } = decodeAgentDescription(
-                agent.description,
-              );
-              return {
-                id: agent.id,
-                content: `Agent名称: ${agent.name}\n描述: ${baseDescription}\n价格: ${agent.price} APT`,
-                metadata: {
-                  agentId: agent.id,
-                  name: agent.name,
-                  price: agent.price,
-                },
-              };
-            });
+            const documents = enabledAgents.map((agent) => ({
+              id: agent.id,
+              content: `Agent名称: ${agent.name}\n描述: ${agent.description}\n价格: ${agent.price} APT`,
+              metadata: {
+                agentId: agent.id,
+                name: agent.name,
+                price: agent.price,
+              },
+            }));
 
             await ragService.initVectorStore({
               namespace: "agents",

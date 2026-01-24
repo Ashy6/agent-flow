@@ -18,10 +18,24 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { agentService, AgentDto } from "@/lib/api/services/agents";
 import { useToast } from "@/contexts/ToastContext";
-import {
-  decodeAgentDescription,
-  AgentChatConfig,
-} from "@/lib/utils/agentConfig";
+
+// 本地聊天配置类型（用于状态管理）
+interface ChatConfig {
+  chatApiUrl?: string;
+  modelId?: string;
+  systemPrompt?: string;
+  temperature?: number;
+}
+
+// 从 Agent 构建聊天配置
+function buildChatConfig(agent: AgentDto): ChatConfig {
+  return {
+    chatApiUrl: agent.url,
+    modelId: agent.urlParams?.modelId,
+    systemPrompt: agent.description,
+    temperature: agent.urlParams?.temperature ?? 0.7,
+  };
+}
 
 export default function AgentChatClient() {
   const router = useRouter();
@@ -31,7 +45,7 @@ export default function AgentChatClient() {
   const [agents, setAgents] = useState<AgentDto[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<AgentDto | null>(null);
   const [selectedAgentConfig, setSelectedAgentConfig] =
-    useState<AgentChatConfig | null>(null);
+    useState<ChatConfig | null>(null);
   const [isLoadingAgents, setIsLoadingAgents] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -84,19 +98,13 @@ export default function AgentChatClient() {
           );
           if (preSelectedAgent) {
             setSelectedAgent(preSelectedAgent);
-            const { config } = decodeAgentDescription(
-              preSelectedAgent.description || "",
-            );
-            setSelectedAgentConfig(config);
+            setSelectedAgentConfig(buildChatConfig(preSelectedAgent));
           }
         } else if (response.items.length > 0) {
           // 否则选中第一个
           const firstAgent = response.items[0];
           setSelectedAgent(firstAgent);
-          const { config } = decodeAgentDescription(
-            firstAgent.description || "",
-          );
-          setSelectedAgentConfig(config);
+          setSelectedAgentConfig(buildChatConfig(firstAgent));
         }
       } catch (error) {
         console.error("获取智能体列表失败:", error);
@@ -115,9 +123,8 @@ export default function AgentChatClient() {
     setSelectedAgent(agent);
     setMessages([]); // 切换智能体时清空消息
 
-    // 解析聊天配置
-    const { config } = decodeAgentDescription(agent.description || "");
-    setSelectedAgentConfig(config);
+    // 直接从 urlParams 构建配置
+    setSelectedAgentConfig(buildChatConfig(agent));
   };
 
   // 发送消息
@@ -131,7 +138,6 @@ export default function AgentChatClient() {
           { text },
           {
             body: {
-              agentId: selectedAgentConfig.agentId,
               modelId: selectedAgentConfig.modelId,
               systemPrompt: selectedAgentConfig.systemPrompt,
               temperature: selectedAgentConfig.temperature,
@@ -144,16 +150,13 @@ export default function AgentChatClient() {
       }
     } else {
       // 没有配置，显示提示信息
-      const { description } = decodeAgentDescription(
-        selectedAgent.description || "",
-      );
       const notConfiguredMessage: UIMessage = {
         id: Date.now().toString(),
         role: "assistant",
         parts: [
           {
             type: "text",
-            text: `你好！我是 ${selectedAgent.name}。\n\n${description || "我能帮助你解决各种问题。"}\n\n当前 Agent 未配置聊天 API。如需启用聊天功能，请在创建或编辑 Agent 时配置聊天 API 参数。`,
+            text: `你好！我是 ${selectedAgent.name}。\n\n${selectedAgent.description || "我能帮助你解决各种问题。"}\n\n当前 Agent 未配置聊天 API。如需启用聊天功能，请在创建或编辑 Agent 时配置聊天 API 参数。`,
           },
         ],
       };
@@ -263,8 +266,7 @@ export default function AgentChatClient() {
                             )}
                           </div>
                           <p className="text-xs text-gray-600 line-clamp-2">
-                            {decodeAgentDescription(agent.description || "")
-                              .description || "暂无描述"}
+                            {agent.description || "暂无描述"}
                           </p>
                         </div>
                       </div>
@@ -352,9 +354,7 @@ export default function AgentChatClient() {
                             你好！我是 {selectedAgent.name} Agent。
                           </h3>
                           <p className="text-gray-600 mb-4">
-                            {decodeAgentDescription(
-                              selectedAgent.description || "",
-                            ).description ||
+                            {selectedAgent.description ||
                               "提供高质量的文本分析服务，适用于内容管理、市场分析等场景。"}
                           </p>
                           <p className="text-sm text-gray-500">
